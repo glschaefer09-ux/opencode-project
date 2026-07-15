@@ -22,6 +22,12 @@ const agents = [
     tools: ["file_write"],
   },
   {
+    name: "notifier",
+    model,
+    systemPrompt: `You create a concise Slack message summarizing the budget report. Include: total spend, top 3 savings opportunities with estimated savings, and total potential savings. Use Slack markdown (bold, bullet points). Keep under 2000 chars. Prefix with ":moneybag: *Budget Report Summary*"`,
+    tools: [],
+  },
+  {
     name: "github-actions",
     model,
     systemPrompt: `You create GitHub issues for each action item in the budget report. Output a JSON array of issue titles and bodies. Do NOT create actual issues — just output the plan.`,
@@ -54,7 +60,8 @@ ${costData}
 
 1. Analyst: identify all cost-saving opportunities with specific numbers
 2. Reporter: create a detailed markdown report
-3. GitHub Actions: list action items as JSON for issue creation`,
+3. Notifier: create a concise Slack summary message
+4. GitHub Actions: list action items as JSON for issue creation`,
 );
 
 console.log("\n=== RESULT ===");
@@ -63,8 +70,16 @@ console.log("Tokens used:", result.totalTokenUsage?.output_tokens ?? "unknown");
 
 if (result.success) {
   const reportPath = process.env.REPORT_PATH ?? "./budget-report.md";
+  const slackPath = process.env.SLACK_MSG_PATH ?? "./slack-message.txt";
   await import("fs").then((fs) =>
     fs.writeFileSync(reportPath, JSON.stringify(result.output, null, 2))
   );
   console.log(`Report saved to: ${reportPath}`);
+
+  const outputStr = typeof result.output === "string" ? result.output : JSON.stringify(result.output);
+  const slackMatch = outputStr.match(/:moneybag:[\s\S]*?(?=\n\n|$)/);
+  if (slackMatch) {
+    await import("fs").then((fs) => fs.writeFileSync(slackPath, slackMatch[0].trim()));
+    console.log(`Slack message saved to: ${slackPath}`);
+  }
 }

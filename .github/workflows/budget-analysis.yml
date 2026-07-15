@@ -47,3 +47,18 @@ jobs:
             --title "Budget Report - $(date +'%Y-%m')" \
             --body "$REPORT" \
             --label "budget,cost-optimization"
+
+      - name: Send Slack notification
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        working-directory: budget-workflow
+        run: |
+          if [ -f slack-message.txt ] && [ -n "$SLACK_WEBHOOK_URL" ]; then
+            MSG=$(cat slack-message.txt)
+            curl -s -X POST -H 'Content-type: application/json' \
+              --data "$(jq -n --arg text "$MSG" '{text: $text}')" \
+              "$SLACK_WEBHOOK_URL"
+            echo "Slack notification sent"
+          fi
+        shell: bash
