@@ -1,0 +1,45 @@
+name: Budget Auto-Fix
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 1 * *"
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+        working-directory: budget-workflow
+
+      - name: Analyze + generate fixes
+        working-directory: budget-workflow
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OMA_MODEL: claude-sonnet-4-20250514
+          OMA_PROVIDER: anthropic
+        run: node analyze.mjs sample-costs.json
+
+      - name: Create implementation PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          BRANCH="budget-fix-$(date +'%Y%m%d')"
+          git checkout -b "$BRANCH"
+
+          claude -p "Read budget-workflow/budget-report.md and budget-workflow/analyze.mjs output. Implement the top 3 cost-saving changes in this repo. Create or modify infrastructure files. Commit each change with a descriptive message." --print
+
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Budget optimization - $(date +'%Y-%m')" \
+            --body "Automated cost-saving changes from budget analysis." \
+            --label "budget,automated-fix" \
+            --base master

@@ -28,6 +28,12 @@ const agents = [
     tools: [],
   },
   {
+    name: "coder",
+    model,
+    systemPrompt: `You are a DevOps engineer who implements cost-saving changes. For each action item, specify: the file to change, the exact change needed, and the before/after diff. Output as a JSON array of {file, change, before, after} objects. Only propose changes — do not modify files.`,
+    tools: ["file_read", "file_write", "grep"],
+  },
+  {
     name: "github-actions",
     model,
     systemPrompt: `You create GitHub issues for each action item in the budget report. Output a JSON array of issue titles and bodies. Do NOT create actual issues — just output the plan.`,
@@ -61,7 +67,8 @@ ${costData}
 1. Analyst: identify all cost-saving opportunities with specific numbers
 2. Reporter: create a detailed markdown report
 3. Notifier: create a concise Slack summary message
-4. GitHub Actions: list action items as JSON for issue creation`,
+4. Coder: propose exact file changes to implement the savings
+5. GitHub Actions: list action items as JSON for issue creation`,
 );
 
 console.log("\n=== RESULT ===");
