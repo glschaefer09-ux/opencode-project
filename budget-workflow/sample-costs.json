@@ -1,0 +1,13 @@
+{
+  "provider": "Azure",
+  "period": "2026-06",
+  "total": 4523.45,
+  "services": [
+    { "name": "Virtual Machines", "cost": 2150.00, "instances": 12 },
+    { "name": "Storage", "cost": 520.30, "tier": "Standard" },
+    { "name": "App Service", "cost": 890.15, "plans": 4 },
+    { "name": "Container Apps", "cost": 345.00, "revisions": 8 },
+    { "name": "Functions", "cost": 218.00, "executions": "2.1M" },
+    { "name": "AI Services", "cost": 400.00, "deployments": 6 }
+  ]
+}

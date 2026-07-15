@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@open-multi-agent/core": "^1.10.0"
+  }
+}

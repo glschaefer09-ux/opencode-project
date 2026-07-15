@@ -1,0 +1,49 @@
+name: Budget Analysis
+
+on:
+  schedule:
+    - cron: "0 8 1 * *"
+  workflow_dispatch:
+    inputs:
+      cost_data:
+        description: "Cost data JSON or path"
+        required: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+        working-directory: budget-workflow
+      - name: Run budget analysis
+        working-directory: budget-workflow
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OMA_MODEL: claude-sonnet-4-20250514
+          OMA_PROVIDER: anthropic
+          COST_DATA_PATH: ${{ github.event.inputs.cost_data || 'sample-costs.json' }}
+          REPORT_PATH: budget-report.md
+        run: node analyze.mjs
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: budget-report
+          path: budget-workflow/budget-report.md
+      - name: Create issue from report
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: budget-workflow
+        run: |
+          REPORT=$(cat budget-report.md)
+          gh issue create \
+            --title "Budget Report - $(date +'%Y-%m')" \
+            --body "$REPORT" \
+            --label "budget,cost-optimization"
