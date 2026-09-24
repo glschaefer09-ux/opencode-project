@@ -7,3 +7,9 @@
 - Prefer batch tool calls (parallel) over sequential
 - Avoid unnecessary file reads — use grep/glob first
 - No comments in code unless explicitly asked
+
+# Credentials
+
+- GitHub auth comes from `GITHUB_TOKEN` (and `GH_TOKEN` for the `gh` CLI) in the environment or root `.env`
+- Never print, log, or commit token values; `.env` is gitignored, `.env.example` lists the names
+- Setup steps: `GITHUB-TOKEN-SETUP.md`
