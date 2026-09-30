@@ -1,0 +1,3 @@
+[submodule "slack-code-workflow"]
+	path = slack-code-workflow
+	url = https://github.com/glschaefer09-ux/CrossPCAI-Slack-Project.git
