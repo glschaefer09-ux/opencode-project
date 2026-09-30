@@ -57,4 +57,13 @@ GitHub already works via the GitHub app (clone, push, PRs). For scripts or the `
 
 ## 6. GitHub Actions
 
-Workflows use the built-in `${{ github.token }}`; no personal token needed. Only add a repo secret (Settings → Secrets and variables → Actions) if a workflow must push to other repos.
+Workflows use the built-in `${{ github.token }}`; no personal token needed. Secret names cannot start with `GITHUB_`.
+
+Repo secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Used by | Required |
+|--------|---------|----------|
+| `ANTHROPIC_API_KEY` | `claude-code.yml` | Yes |
+| `QWEN_API_KEY` | `qwen-code.yml` (DashScope key) | Optional; review is skipped if unset |
+
+Optional repo variables `QWEN_BASE_URL` and `QWEN_MODEL` override the DashScope endpoint and model.

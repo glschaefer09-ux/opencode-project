@@ -8,20 +8,38 @@ on:
 
 jobs:
   qwen:
-    if: ${{ github.event_name != 'issue_comment' || contains(github.event.comment.body, '/qwen') }}
+    if: ${{ github.event_name != 'issue_comment' || (github.event.issue.pull_request && contains(github.event.comment.body, '/qwen')) }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
-      issues: write
+    env:
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
     steps:
+      - name: Check for QWEN_API_KEY
+        if: ${{ env.QWEN_API_KEY == '' }}
+        run: echo "::notice::QWEN_API_KEY secret not set; skipping Qwen review. See GITHUB-TOKEN-SETUP.md"
       - uses: actions/checkout@v4
+        if: ${{ env.QWEN_API_KEY != '' }}
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
+        if: ${{ env.QWEN_API_KEY != '' }}
         with:
           node-version: 22
-      - run: npm install -g @qwen-code/qwen-code
+      - if: ${{ env.QWEN_API_KEY != '' }}
+        run: npm install -g @qwen-code/qwen-code
       - name: Run Qwen Code
+        if: ${{ env.QWEN_API_KEY != '' }}
         env:
-          QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.QWEN_API_KEY }}
+          OPENAI_BASE_URL: ${{ vars.QWEN_BASE_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' }}
+          OPENAI_MODEL: ${{ vars.QWEN_MODEL || 'qwen3-coder-plus' }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          qwen -p "Review the changes in this PR. Provide a summary of what changed, potential issues, and suggestions." --print
+          gh pr diff "$PR_NUMBER" > /tmp/pr.diff
+          qwen --auth-type openai --max-wall-time 10m -p "Review this PR diff. Summarize what changed, list potential issues, and give suggestions.
+
+          $(head -c 200000 /tmp/pr.diff)" > /tmp/review.md
+          gh pr comment "$PR_NUMBER" --body-file /tmp/review.md
