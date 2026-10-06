@@ -1,0 +1,15 @@
+{
+  "name": "mattermost-webhook",
+  "version": "1.0.0",
+  "description": "Mattermost webhook integration: send messages to and receive callbacks from Mattermost.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "send": "node send.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
