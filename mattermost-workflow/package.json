@@ -1,0 +1,15 @@
+{
+  "name": "mattermost-code-workflow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local AI agent for Mattermost: listens for mentions, runs the OpenCode agent, and replies.",
+  "main": "bot.mjs",
+  "scripts": {
+    "dev": "node bot.mjs",
+    "start": "node bot.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.21.0"
+  }
+}

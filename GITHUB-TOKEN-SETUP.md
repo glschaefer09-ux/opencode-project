@@ -39,7 +39,23 @@ Verify: `gh auth status` or `curl -s -H "Authorization: Bearer $GITHUB_TOKEN" ht
 
 `run-slack-bot.ps1` reads `GITHUB_TOKEN` from `.env`, copies it to `GH_TOKEN` for the `gh` CLI, and warns if it is missing. The bot code is expected in `slack-code-workflow/node` (not yet committed).
 
-## 4. Claude.ai chat
+## 4. Mattermost bot
+
+`run-mattermost-bot.ps1` reads `MATTERMOST_URL` and `MATTERMOST_BOT_TOKEN` from `.env` and starts the local AI agent in `mattermost-workflow/`. The bot listens for posts that mention it, runs the OpenCode agent, and replies in the thread.
+
+1. In Mattermost: **System Console → Integrations → Bot Accounts** → enable, then create a bot and copy its access token.
+2. Fill `.env`:
+
+```
+MATTERMOST_URL=https://your-mattermost-server
+MATTERMOST_BOT_TOKEN=...
+```
+
+3. Run `pwsh run-mattermost-bot.ps1`.
+
+For one-way notifications (e.g. budget reports) set `MATTERMOST_WEBHOOK_URL` to an incoming webhook URL and use `node mattermost-workflow/notify.mjs "message"`.
+
+## 5. Claude.ai chat
 
 No token needed. Connect GitHub once:
 
@@ -47,7 +63,7 @@ No token needed. Connect GitHub once:
 2. Authorize the `glschaefer09-ux` account and grant access to `opencode-project`
 3. In any chat, use the **+** / tools menu to attach the repo or enable the GitHub connector
 
-## 5. Claude Code cloud sessions (claude.ai/code)
+## 6. Claude Code cloud sessions (claude.ai/code)
 
 GitHub already works via the GitHub app (clone, push, PRs). For scripts or the `gh` CLI inside the container:
 
@@ -55,7 +71,7 @@ GitHub already works via the GitHub app (clone, push, PRs). For scripts or the `
 2. Add environment variables `GITHUB_TOKEN` and `GH_TOKEN`
 3. Start a new session to pick them up
 
-## 6. GitHub Actions
+## 7. GitHub Actions
 
 Workflows use the built-in `${{ github.token }}`; no personal token needed. Secret names cannot start with `GITHUB_`.
 
