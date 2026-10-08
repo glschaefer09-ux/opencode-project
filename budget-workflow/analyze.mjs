@@ -1,6 +1,6 @@
 import { OpenMultiAgent } from "@open-multi-agent/core";
 
-const model = process.env.OMA_MODEL ?? "claude-sonnet-4-20250514";
+const model = process.env.OMA_MODEL ?? "claude-sonnet-5-5";
 const defaultProvider = process.env.OMA_PROVIDER ?? "anthropic";
 const defaultBaseURL = process.env.OMA_BASE_URL;
 
@@ -49,6 +49,9 @@ const orchestrator = new OpenMultiAgent({
     if (event.type === "task_start" || event.type === "task_complete") {
       console.log(`  [${event.type}] ${event.task ?? ""}`);
     }
+    if (event.type === "agent_complete" && event.data?.result?.success === false) {
+      console.error(`  [${event.agent}] error: ${String(event.data.result.output).slice(0, 500)}`);
+    }
   },
 });
 
@@ -75,18 +78,23 @@ console.log("\n=== RESULT ===");
 console.log(result.success ? "SUCCESS" : "FAILED");
 console.log("Tokens used:", result.totalTokenUsage?.output_tokens ?? "unknown");
 
-if (result.success) {
-  const reportPath = process.env.REPORT_PATH ?? "./budget-report.md";
-  const slackPath = process.env.SLACK_MSG_PATH ?? "./slack-message.txt";
-  await import("fs").then((fs) =>
-    fs.writeFileSync(reportPath, JSON.stringify(result.output, null, 2))
-  );
-  console.log(`Report saved to: ${reportPath}`);
+const outputs = [...(result.agentResults ?? new Map())].filter(([, r]) => r?.output);
 
-  const outputStr = typeof result.output === "string" ? result.output : JSON.stringify(result.output);
-  const slackMatch = outputStr.match(/:moneybag:[\s\S]*?(?=\n\n|$)/);
-  if (slackMatch) {
-    await import("fs").then((fs) => fs.writeFileSync(slackPath, slackMatch[0].trim()));
-    console.log(`Slack message saved to: ${slackPath}`);
-  }
+if (!result.success) {
+  for (const [name, r] of outputs) console.error(`  [${name}] ${r.success ? "ok" : "error"}: ${String(r.output).slice(0, 500)}`);
+  process.exit(1);
+}
+
+const fs = await import("fs");
+const reportPath = process.env.REPORT_PATH ?? "./budget-report.md";
+const slackPath = process.env.SLACK_MSG_PATH ?? "./slack-message.txt";
+const byName = Object.fromEntries(outputs.map(([name, r]) => [name, String(r.output)]));
+const report = byName.reporter ?? outputs.map(([name, r]) => `## ${name}\n\n${r.output}`).join("\n\n");
+fs.writeFileSync(reportPath, report);
+console.log(`Report saved to: ${reportPath}`);
+
+const slackMatch = (byName.notifier ?? report).match(/:moneybag:[\s\S]*/);
+if (slackMatch) {
+  fs.writeFileSync(slackPath, slackMatch[0].trim());
+  console.log(`Slack message saved to: ${slackPath}`);
 }
