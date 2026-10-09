@@ -26,7 +26,7 @@ jobs:
         working-directory: budget-workflow
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OMA_MODEL: claude-sonnet-4-20250514
+          OMA_MODEL: claude-sonnet-5-5
           OMA_PROVIDER: anthropic
           COST_DATA_PATH: ${{ github.event.inputs.cost_data || 'sample-costs.json' }}
           REPORT_PATH: budget-report.md
@@ -42,10 +42,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         working-directory: budget-workflow
         run: |
-          REPORT=$(cat budget-report.md)
+          gh label create budget --force
+          gh label create cost-optimization --force
           gh issue create \
             --title "Budget Report - $(date +'%Y-%m')" \
-            --body "$REPORT" \
+            --body-file budget-report.md \
             --label "budget,cost-optimization"
 
       - name: Send Slack notification
