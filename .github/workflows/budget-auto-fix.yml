@@ -23,7 +23,7 @@ jobs:
         working-directory: budget-workflow
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OMA_MODEL: claude-sonnet-4-20250514
+          OMA_MODEL: claude-sonnet-5-5
           OMA_PROVIDER: anthropic
         run: node analyze.mjs sample-costs.json
 
